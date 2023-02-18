@@ -1,0 +1,14 @@
+prefix=build/armeabi-v7a
+exec_prefix=${prefix}
+libdir=build/armeabi-v7a/lib
+includedir=build/armeabi-v7a/include
+
+Name: libavfilter
+Description: FFmpeg audio/video filtering library
+Version: 8.56.100
+Requires: 
+Requires.private: libavutil >= 57.44.100
+Conflicts:
+Libs: -L${libdir}  -lavfilter 
+Libs.private: -pthread -lm -latomic
+Cflags: -I${includedir}
