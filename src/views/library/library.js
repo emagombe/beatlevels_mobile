@@ -16,9 +16,12 @@ import {
 	View,
 } from 'react-native';
 
-import Library from "./views/library/library";
+/* Components */
+import BLButton from "../components/bl_button";
 
-const Index = () => {
+import Folders from "./folders";
+
+const Library = () => {
 
 	React.useEffect(() => {
 
@@ -32,8 +35,26 @@ const Index = () => {
 				flex: 1,
 			}}
 		>
-			<Library />
+			<View
+				style={{
+					position: "absolute",
+					zIndex: 5,
+				}}
+			>
+				<View
+					style={{
+
+					}}
+				>
+					<BLButton
+						
+					>
+
+					</BLButton>
+				</View>
+			</View>
+			<Folders />
 		</View>
 	);
 }
-export default Index;
+export default Library;

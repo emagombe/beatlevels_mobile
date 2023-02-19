@@ -2,6 +2,7 @@ package com.znbox.beatlevels.packages;
 
 import androidx.annotation.NonNull;
 
+import com.znbox.beatlevels.modules.MediaScanner;
 import com.znbox.beatlevels.modules.Waveform;
 import com.facebook.react.ReactPackage;
 import com.facebook.react.bridge.NativeModule;
@@ -19,6 +20,7 @@ public class AppPackages implements ReactPackage {
     public List<NativeModule> createNativeModules(@NonNull ReactApplicationContext reactApplicationContext) {
         List<NativeModule> modules = new ArrayList<>();
         modules.add(new Waveform(reactApplicationContext));
+        modules.add(new MediaScanner(reactApplicationContext));
         return modules;
     }
 

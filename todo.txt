@@ -3,6 +3,7 @@ Add key value databse mmkv (DONE)
 Install ffmpeg JNI (DONE)
 Add c++ waveform reader (PAUSED)
 Build route system
-List media (CURRENT)
+List media folders (CURRENT)
+List media
 Add player service
 Add player notification

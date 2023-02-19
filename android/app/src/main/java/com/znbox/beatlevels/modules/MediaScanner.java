@@ -141,7 +141,8 @@ public class MediaScanner extends ReactContextBaseJavaModule {
 		} catch (Exception ex) {
 			promise.reject(ex);
 			if(ex.getMessage() != null) {
-				Toast.makeText(getReactApplicationContext(), ex.getMessage(), Toast.LENGTH_SHORT).show();
+				ex.printStackTrace();
+				Log.d("Media files ex: ", ex.getMessage());
 			}
 		}
 	}

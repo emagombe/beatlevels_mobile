@@ -1,0 +1,25 @@
+{
+	"colors": {
+		"white": "#fff",
+		"dark": "#000",
+	},
+	"background": {
+		"main": "#363636",
+		"content": {
+			"main": "#000000",
+		}
+	},
+	"font": {
+		"main": "#fff",
+	},
+	"ripple": {
+		"main": "#fff",
+		"dark": "#fff",
+		"light": "#000",
+	},
+	"button": {
+		"main": "#1c1c1c",
+	},
+	"primary": "#fff",
+	"secodary": "lightgreen",
+}
