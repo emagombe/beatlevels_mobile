@@ -9,6 +9,10 @@
       android:roundIcon="@mipmap/ic_launcher_round"
       android:allowBackup="false"
       android:theme="@style/AppTheme">
+        <service
+            android:name=".services.NativeBridgeService"
+            android:enabled="true"
+            android:persistent="true" />
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
