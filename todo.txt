@@ -1,0 +1,8 @@
+Install service Native bridge (DONE)
+Add key value databse mmkv (DONE)
+Install ffmpeg JNI (DONE)
+Add c++ waveform reader (PAUSED)
+Build route system
+List media (CURRENT)
+Add player service
+Add player notification
