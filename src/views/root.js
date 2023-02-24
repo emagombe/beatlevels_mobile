@@ -18,11 +18,9 @@ import {
 
 import { NativeRouter, Route, Link, Routes } from "react-router-native";
 
-import Library from "./views/library/library";
+import Library from "./library/library";
 
-import Root from "./views/root";
-
-const Index = () => {
+const Root = () => {
 
 	React.useEffect(() => {
 
@@ -31,20 +29,10 @@ const Index = () => {
 	const isDarkMode = useColorScheme() === 'dark';
 
 	return (
-		<NativeRouter>
-			<View
-				style={{
-					backgroundColor: "red",
-					width: "100%",
-					height: 10,
-				}}
-			>
-
-			</View>
-			<Routes>
-				<Route exact path="/*" element={<Root />} />
-			</Routes>
-		</NativeRouter>
+		<Routes>
+			<Route exact path="/" element={<Library />} />
+			<Route exact path="/library" element={<Library />} />
+		</Routes>
 	);
 }
-export default Index;
+export default Root;

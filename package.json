@@ -14,7 +14,8 @@
     "react-native": "0.71.3",
     "react-native-dotenv": "^3.4.7",
     "react-native-mmkv": "^2.7.0",
-    "react-native-vector-icons": "^9.2.0"
+    "react-native-vector-icons": "^9.2.0",
+    "react-router-native": "^6.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
