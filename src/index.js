@@ -32,15 +32,6 @@ const Index = () => {
 
 	return (
 		<NativeRouter>
-			<View
-				style={{
-					backgroundColor: "red",
-					width: "100%",
-					height: 10,
-				}}
-			>
-
-			</View>
 			<Routes>
 				<Route exact path="/*" element={<Root />} />
 			</Routes>
