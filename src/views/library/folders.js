@@ -5,7 +5,7 @@
  * @format
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
 	SafeAreaView,
@@ -58,14 +58,14 @@ const Folders = () => {
 		return _folders;
 	};
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const run_async = async () => {
 			/* Request read files permissions first */
 			read_external_storage_permission().then(async () => {
 				/* Scanning media on storage */
 				const media_files = await NativeModules.MediaScanner.find_media();
 				const _folders = get_folders(media_files.media_files);
-				console.log("_folders: ", _folders);
+				//console.log("_folders: ", _folders);
 				set_folders(_folders);
 			});
 		};

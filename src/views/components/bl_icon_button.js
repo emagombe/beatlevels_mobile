@@ -11,16 +11,15 @@ import {
 	TouchableNativeFeedback,
 } from 'react-native';
 
+import theme from "../../theme/theme";
 
 const BLIconButton = forwardRef((props, ref) => {
-
-	const theme = useSelector(state => state.theme);
 
 	const {
 		size = 100,
 		onPress = () => {},
 		style = {},
-		color = theme.dark ? theme.button_dark : theme.button,
+		color = theme.button.main,
 	} = props;
 
 	return (
@@ -39,7 +38,7 @@ const BLIconButton = forwardRef((props, ref) => {
 		>
 			<TouchableNativeFeedback
 				onPress={onPress}
-				background={TouchableNativeFeedback.Ripple(theme.dark ? theme.ripple_color_dark : theme.ripple_color, true)}
+				background={TouchableNativeFeedback.Ripple(theme.ripple.main, true, 300)}
 			>
 				<View
 					style={{

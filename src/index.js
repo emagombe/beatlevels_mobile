@@ -5,7 +5,7 @@
  * @format
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import {
 	ScrollView,
@@ -14,9 +14,10 @@ import {
 	Text,
 	useColorScheme,
 	View,
+	BackHandler
 } from 'react-native';
 
-import { NativeRouter, Route, Link, Routes } from "react-router-native";
+import { NativeRouter, Route, Link, useNavigate } from "react-router-native";
 
 import Library from "./views/library/library";
 
@@ -24,17 +25,15 @@ import Root from "./views/root";
 
 const Index = () => {
 
-	React.useEffect(() => {
+	const isDarkMode = useColorScheme() === 'dark';
+
+	useEffect(() => {
 
 	}, []);
 
-	const isDarkMode = useColorScheme() === 'dark';
-
 	return (
 		<NativeRouter>
-			<Routes>
-				<Route exact path="/*" element={<Root />} />
-			</Routes>
+			<Route exact path="/*" component={Root} />
 		</NativeRouter>
 	);
 }
