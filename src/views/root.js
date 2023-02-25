@@ -21,6 +21,7 @@ import { NativeRouter, Route, Link, useHistory, Switch } from "react-router-nati
 
 import Library from "./library/library";
 import Folders from "./library/folders";
+import Folder from "./library/folder";
 
 const Root = (props) => {
 
@@ -47,6 +48,9 @@ const Root = (props) => {
 				</Route>
 				<Route exact path="/library/all_folders">
 					<Folders/>
+				</Route>
+				<Route exact path="/library/folder">
+					<Folder/>
 				</Route>
 				<Route>
 					<Text>Nothing</Text>

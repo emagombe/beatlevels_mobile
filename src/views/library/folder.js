@@ -29,13 +29,14 @@ import SLIcon from 'react-native-vector-icons/SimpleLineIcons';
 import { useHistory } from "react-router-native";
 
 import theme from "../../theme/theme";
+import MediaItem from "./media_item";
 
 /* Components */
 import BLButton from "../components/bl_button";
 
 import { read_external_storage_permission } from "../../utils/permissions";
 
-const Folders = () => {
+const Folder = (props) => {
 
 	const history = useHistory();
 
@@ -43,35 +44,39 @@ const Folders = () => {
 	const windowWidth = Dimensions.get('window').width;
 	const windowHeight = Dimensions.get('window').height;
 
-	const [folders, set_folders] = React.useState([]);
+	const { bucket_display_name = "", folder_path = "" } = history.location.state.data;
 
-	const get_folders = (media_list = []) => {
-		const _folders = media_list.reduce((acc, item, index) => {
-			const folder_path = item._data.split("/" + item._display_name)[0];
-			const folder = folder_path.split("/")[folder_path.split("/").length - 1];
-			if(!acc.some(_item => _item._data.split("/" + _item._display_name)[0] === folder_path)) {
-				if(typeof item.bucket_display_name === "undefined") {
-					acc.push({ ...item, bucket_display_name: folder, folder_path });
-				} else {
-					acc.push({ ...item, folder_path });
-				}
+	const [folders, set_folders] = React.useState([]);
+	const [media_files, set_media_files] = React.useState([]);
+
+	const get_folder_content = (media_list = []) => {
+		const _media = media_list.filter(item => {
+			const _folder_path = item._data.split("/" + item._display_name)[0];
+			//const folder = _folder_path.split("/")[_folder_path.split("/").length - 1];
+			return _folder_path === folder_path;
+		}).map(item => {
+			let _bucket_display_name;
+			if(typeof item.bucket_display_name === "undefined") {
+				const _folder_path = item._data.split("/" + item._display_name)[0];
+				const folder = _folder_path.split("/")[_folder_path.split("/").length - 1];
+				_bucket_display_name = folder;
+			} else {
+				_bucket_display_name = item.bucket_display_name;
 			}
-			return acc;
-		}, []);
-		_folders.sort((a, b) => a.bucket_display_name > b.bucket_display_name ? 1 : -1);
-		return _folders;
+			return {
+				...item,
+				bucket_display_name: _bucket_display_name,
+			};
+		});
+		_media.sort((a, b) => a.bucket_display_name > b.bucket_display_name ? 1 : -1);
+		return _media;
 	};
 
 	useEffect(() => {
 		const run_async = async () => {
-			/* Request read files permissions first */
-			read_external_storage_permission().then(async () => {
-				/* Scanning media on storage */
-				const media_files = await NativeModules.MediaScanner.find_media();
-				const _folders = get_folders(media_files.media_files);
-				//console.log("_folders: ", _folders);
-				set_folders(_folders);
-			});
+			const media_files = await NativeModules.MediaScanner.find_media();
+			const folder_content = get_folder_content(media_files.media_files);
+			set_media_files(folder_content);
 		};
 		run_async();
 	}, []);
@@ -80,67 +85,11 @@ const Folders = () => {
 
 		return (
 			<>
-				<BLButton
-					onPress={() => {
-						history.push("/library/folder", {
-							data: {
-								bucket_display_name: item.bucket_display_name,
-								folder_path: item.folder_path,
-							}
-						});
-					}}
-					style={{
-						borderRadius: 10,
-						marginLeft: 5,
-						marginRight: 0,
-					}}
-				>
-					<View
-						style={{
-							width: "100%",
-							height: windowHeight / 8,
-							display: "flex",
-							flexDirection: "row",
-							alignItems: "center",
-							justifyContent: "flex-start",
-						}}
-					>
-						<MCIcon
-							name="folder"
-							size={windowHeight / 12}
-							color={theme.primary}
-							style={{
-								marginRight: 10,
-								opacity: 0.6,
-							}}
-						/>
-						<View
-							style={{
-								flexShrink: 1,
-							}}
-						>
-							<Text
-								style={{
-									color: theme.font.main,
-									fontWeight: "bold",
-									fontSize: 16,
-								}}
-								nativeID={`bucket_display_name_${item._id}`}
-							>
-								{item.bucket_display_name}
-							</Text>
-							<Text
-								style={{
-									color: theme.font.main,
-									fontWeight: "normal",
-									fontSize: 13,
-								}}
-							>
-								{item.folder_path.length > 50 ? item.folder_path.substring(0, 50) + "..." : item.folder_path}
-							</Text>
-						</View>
-					</View>
-				</BLButton>
+				<MediaItem
+					item={item}
+					index={index}
+					bucket_display_name={bucket_display_name}
+				/>
 			</>
 		);
 	};
@@ -179,14 +128,14 @@ const Folders = () => {
 						top: windowHeight / 6 - 30,
 					}}
 				>
-					All folders
+					{bucket_display_name}
 				</Text>
 				<FlatList
 					showsHorizontalScrollIndicator={false}
 					showsVerticalScrollIndicator={false}
 					horizontal={false}
 					keyExtractor={(item, index) => item._id}
-					data={folders}
+					data={media_files}
 					renderItem={render_item}
 					overScrollMode="always"
 					style={{
@@ -207,4 +156,4 @@ const Folders = () => {
 		</View>
 	);
 }
-export default Folders;
+export default Folder;
