@@ -35,8 +35,6 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class Player extends Service {
 
@@ -91,18 +89,14 @@ public class Player extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 
         try {
-
-	        Log.d("Where: ", "Begin");
             if(exoPlayer == null) {
                 return START_NOT_STICKY;
             }
-	        Log.d("Where: ", "After begin");
 
             final String ACTION = intent.getAction();
 
             switch (ACTION) {
                 case "SET_MEDIA": {
-	                Log.d("Where: ", "Start");
 	                final String media_info_string = intent.getStringExtra("json");
 	                final JSONObject media_info = new JSONObject(media_info_string);
 
@@ -119,7 +113,6 @@ public class Player extends Service {
 	                for (int i = 0; i < media_queue.length(); i ++) {
 		                player_queue[i] = media_queue.getInt(i);
 	                }
-	                Log.d("Where: ", "Here");
 
                     DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(getApplicationContext());
                     MediaItem mediaItem = null;
