@@ -58,19 +58,18 @@ const MediaItem = (props) => {
 
 	const on_press_play_tracks = async (item) => {
 		try {
-			let id_list = list.map(_item => String(_item._id));
-			let uri_list = list.map(_item => String(_item._data));
-
-			let title_list = list.map(_item => String(_item.title));
-			let artist_list = list.map(_item => String(_item.artist));
-			let duration_list = list.map(_item => String(_item.duration));
-
-			const index = id_list.findIndex(_item => _item == item._id);
-			id_list = [...id_list.splice(index, id_list.length - 1), ...id_list.splice(0, index)];
-			uri_list = [...uri_list.splice(index, uri_list.length - 1), ...uri_list.splice(0, index)];
-			title_list = [...title_list.splice(index, title_list.length - 1), ...title_list.splice(0, index)];
-			artist_list = [...artist_list.splice(index, artist_list.length - 1), ...artist_list.splice(0, index)];
-			duration_list = [...duration_list.splice(index, duration_list.length - 1), ...duration_list.splice(0, index)];
+			const media_info = {
+				id: String(item._id),
+				local: false,
+				title: String(item.title),
+				artist: String(item.artist),
+				uri: String(item._data),
+				artwork_uri: String(""),
+				duration: parseInt(item.duration),
+				queue: list.map((item, index) => index),
+			};
+			await NativeModules.Player.set_media(JSON.stringify(media_info));
+			await NativeModules.Player.play();
 		} catch (ex) {
 			console.log(ex);
 		}

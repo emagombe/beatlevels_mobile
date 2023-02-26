@@ -89,6 +89,7 @@ const Folder = (props) => {
 					item={item}
 					index={index}
 					bucket_display_name={bucket_display_name}
+					list={media_files}
 				/>
 			</>
 		);
