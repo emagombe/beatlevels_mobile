@@ -200,7 +200,6 @@ const Folders = () => {
 						alignItems: "center",
 						borderTopLeftRadius: 20,
 						borderTopRightRadius: 20,
-						flex: 1,
 					}}
 				/>
 			</View>

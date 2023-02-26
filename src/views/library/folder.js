@@ -101,58 +101,50 @@ const Folder = (props) => {
 				backgroundColor: theme.background.main,
 			}}
 		>
-			<View
+			<Text
 				style={{
-					backgroundColor: theme.background.content.main,
-					flex: 1,
+					color: theme.font.main,
+					fontWeight: "bold",
+					fontSize: 16,
+					flexWrap: "wrap",
+					flexShrink: 1,
+					backgroundColor: theme.button.main,
+					textAlign: "center",
+					borderRadius: 10,
+					elevation: 10,
+					alignSelf: "flex-start",
+					marginLeft: 5,
+					padding: 5,
+					paddingRight: 10,
+					paddingLeft: 10,
+					position: "absolute",
+					zIndex: 2,
+					top: windowHeight / 6 - 30,
 				}}
 			>
-				<Text
-					style={{
-						color: theme.font.main,
-						fontWeight: "bold",
-						fontSize: 16,
-						flexWrap: "wrap",
-						flexShrink: 1,
-						backgroundColor: theme.button.main,
-						textAlign: "center",
-						borderRadius: 10,
-						elevation: 10,
-						alignSelf: "flex-start",
-						marginLeft: 5,
-						padding: 5,
-						paddingRight: 10,
-						paddingLeft: 10,
-						position: "absolute",
-						zIndex: 2,
-						top: windowHeight / 6 - 30,
-					}}
-				>
-					{bucket_display_name}
-				</Text>
-				<FlatList
-					showsHorizontalScrollIndicator={false}
-					showsVerticalScrollIndicator={false}
-					horizontal={false}
-					keyExtractor={(item, index) => item._id}
-					data={media_files}
-					renderItem={render_item}
-					overScrollMode="always"
-					style={{
-						marginTop: windowHeight / 6,
-					}}
-					contentContainerStyle={{
-						paddingBottom: windowHeight / 5,
-						paddingTop: 10,
-						paddingRight: 5,
-						justifyContent: "flex-start",
-						alignItems: "center",
-						borderTopLeftRadius: 20,
-						borderTopRightRadius: 20,
-						flex: 1,
-					}}
-				/>
-			</View>
+				{bucket_display_name}
+			</Text>
+			<FlatList
+				showsHorizontalScrollIndicator={false}
+				showsVerticalScrollIndicator={false}
+				horizontal={false}
+				keyExtractor={(item, index) => item._id}
+				data={media_files}
+				renderItem={render_item}
+				overScrollMode="always"
+				style={{
+					marginTop: windowHeight / 6,
+				}}
+				contentContainerStyle={{
+					paddingBottom: windowHeight / 5,
+					paddingTop: 10,
+					paddingRight: 5,
+					justifyContent: "flex-start",
+					alignItems: "center",
+					borderTopLeftRadius: 20,
+					borderTopRightRadius: 20,
+				}}
+			/>
 		</View>
 	);
 }
