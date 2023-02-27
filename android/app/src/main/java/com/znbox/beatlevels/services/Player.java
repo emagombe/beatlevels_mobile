@@ -119,6 +119,7 @@ public class Player extends Service {
 						startForegroundService(intent);
 					}
 				}
+
 			});
 			mediaSessionCompat.setActive(true);
 			androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle()
@@ -139,6 +140,12 @@ public class Player extends Service {
 			PendingIntent play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 			NotificationCompat.Action play_action = new NotificationCompat.Action.Builder(R.drawable.baseline_play_arrow_24, ACTION_PLAY, play_pendingIntent).build();
 
+			Intent stopIntent = new Intent(this, Player.class);
+			Bundle bundle_stop = new Bundle();
+			stopIntent.setAction("STOP");
+			stopIntent.putExtras(bundle_stop);
+			PendingIntent stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action stop_action = new NotificationCompat.Action.Builder(R.drawable.baseline_stop_24, ACTION_STOP, stop_pendingIntent).build();
 
 			Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
 					.setSmallIcon(R.drawable.play_circle)
@@ -148,8 +155,8 @@ public class Player extends Service {
 					.setChannelId(CHANNEL_ID)
 					.setStyle(mediaStyle)
 					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
+					.addAction(stop_action)
 					.build();
-			Log.d("isPlaying: ", Boolean.toString(exoPlayer.isPlaying()));
 			player_notification_manager = NotificationManagerCompat.from(getApplicationContext());
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 				/* Notification Manager. Creating notification channel */
@@ -356,7 +363,7 @@ public class Player extends Service {
 	            }
 	            case "STOP": {
 		            if(exoPlayer != null) {
-			            this.onDestroy();
+			            stopSelf();
 		            }
 					break;
 	            }
@@ -376,7 +383,7 @@ public class Player extends Service {
 
 	@Override
 	public void onDestroy() {
-		if (exoPlayer == null) {
+		if (exoPlayer != null) {
 			exoPlayer.stop();
 			exoPlayer.release();
 			exoPlayer = null;
