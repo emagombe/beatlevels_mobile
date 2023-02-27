@@ -156,6 +156,7 @@ public class Player extends Service {
 					.setStyle(mediaStyle)
 					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
 					.addAction(stop_action)
+					.setStyle(mediaStyle.setShowActionsInCompactView(1, 0))
 					.build();
 			player_notification_manager = NotificationManagerCompat.from(getApplicationContext());
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
