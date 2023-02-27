@@ -1,6 +1,7 @@
 package com.znbox.beatlevels.modules;
 
 import android.content.Intent;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -23,7 +24,9 @@ public class Player extends ReactContextBaseJavaModule {
 			intent.setAction("SET_MEDIA");
 			intent.putExtra("json", json);
 			intent.setClass(getReactApplicationContext(), com.znbox.beatlevels.services.Player.class);
-			getReactApplicationContext().startService(intent);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				getReactApplicationContext().startForegroundService(intent);
+			}
 			promise.resolve(true);
 		} catch (Exception ex) {
 			promise.reject(ex);
@@ -40,7 +43,9 @@ public class Player extends ReactContextBaseJavaModule {
 			Intent intent = new Intent();
 			intent.setAction("PLAY");
 			intent.setClass(getReactApplicationContext(), com.znbox.beatlevels.services.Player.class);
-			getReactApplicationContext().startService(intent);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				getReactApplicationContext().startForegroundService(intent);
+			}
 			promise.resolve(true);
 		} catch (Exception ex) {
 			promise.reject(ex);
@@ -57,7 +62,9 @@ public class Player extends ReactContextBaseJavaModule {
 			Intent intent = new Intent();
 			intent.setAction("PAUSE");
 			intent.setClass(getReactApplicationContext(), com.znbox.beatlevels.services.Player.class);
-			getReactApplicationContext().startService(intent);
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+				getReactApplicationContext().startForegroundService(intent);
+			}
 			promise.resolve(true);
 		} catch (Exception ex) {
 			promise.reject(ex);

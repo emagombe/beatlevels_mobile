@@ -163,6 +163,8 @@ dependencies {
 
     implementation("com.google.android.exoplayer:exoplayer-core:2.18.3")
 
+    implementation 'androidx.media:media:1.6.0'
+
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
         exclude group:'com.squareup.okhttp3', module:'okhttp'

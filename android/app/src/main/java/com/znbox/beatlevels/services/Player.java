@@ -1,18 +1,29 @@
 package com.znbox.beatlevels.services;
 
 import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.MediaMetadataRetriever;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
+import android.support.v4.media.MediaMetadataCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationChannelCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultRenderersFactory;
@@ -29,6 +40,7 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSource;
 import com.znbox.beatlevels.R;
 
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -44,14 +56,131 @@ public class Player extends Service {
 	private static Handler volume_handler = new Handler();
 	private static Runnable volume_runner = null;
 
+
+	/* Notification */
+	private static String CHANNEL_ID = "BeatLevels Player";
+	private static String CHANNEL_NAME = "BeatLevels Channel";
+	private static int NOTIFICATION_ID = 1;
+	private static NotificationManagerCompat player_notification_manager = null;
+	private static Notification player_notification = null;
+	private static MediaSessionCompat mediaSessionCompat = null;
+
+	/* Notification Actions */
+	public static final String ACTION_PLAY = "play";
+	public static final String ACTION_PAUSE = "pause";
+	public static final String ACTION_REWIND = "rewind";
+	public static final String ACTION_FAST_FORWARD = "fast_foward";
+	public static final String ACTION_NEXT = "next";
+	public static final String ACTION_PREVIOUS = "previous";
+	public static final String ACTION_STOP = "stop";
+
 	public Player() {
 
+	}
+
+	@SuppressLint("ServiceCast")
+	private void create_notification() {
+		try {
+			NotificationChannelCompat notificationChannelCompat = new NotificationChannelCompat.Builder(CHANNEL_ID, NotificationManagerCompat.IMPORTANCE_NONE)
+					.setLightColor(Color.BLUE)
+					.setName(CHANNEL_NAME)
+					.build();
+			byte[] buff = exoPlayer.getMediaMetadata().artworkData;
+			Bitmap bitmap = BitmapFactory.decodeByteArray(buff, 0, buff.length);
+
+			if(mediaSessionCompat == null) {
+				mediaSessionCompat = new MediaSessionCompat(this, "Player");
+			}
+			android.media.MediaMetadata mediaMetadata = new android.media.MediaMetadata.Builder()
+					.putBitmap(android.media.MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
+					.putString(android.media.MediaMetadata.METADATA_KEY_ARTIST, (String) exoPlayer.getMediaMetadata().artist)
+					.putString(android.media.MediaMetadata.METADATA_KEY_ALBUM, (String) exoPlayer.getMediaMetadata().albumTitle)
+					.putString(android.media.MediaMetadata.METADATA_KEY_TITLE, (String) exoPlayer.getMediaMetadata().title)
+					.putLong(android.media.MediaMetadata.METADATA_KEY_DURATION, exoPlayer.getDuration())
+					.build();
+			mediaSessionCompat.setMetadata(MediaMetadataCompat.fromMediaMetadata(mediaMetadata));
+			mediaSessionCompat.setCallback(new MediaSessionCompat.Callback() {
+				@Override
+				public void onPlay() {
+					Intent intent = new Intent();
+					intent.setAction("PLAY");
+					intent.setClass(getApplicationContext(), Player.class);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						startForegroundService(intent);
+					}
+				}
+
+				@Override
+				public void onPause() {
+					Intent intent = new Intent();
+					intent.setAction("PAUSE");
+					intent.setClass(getApplicationContext(), Player.class);
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+						startForegroundService(intent);
+					}
+				}
+			});
+			mediaSessionCompat.setActive(true);
+			androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle()
+					.setMediaSession(MediaSessionCompat.Token.fromToken(mediaSessionCompat.getSessionToken().getToken()));
+
+			/* Setting playback actions */
+			Intent pauseIntent = new Intent(this, Player.class);
+			Bundle bundle_pause = new Bundle();
+			pauseIntent.setAction("PAUSE");
+			pauseIntent.putExtras(bundle_pause);
+			PendingIntent pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action pause_action = new NotificationCompat.Action.Builder(R.drawable.baseline_pause_24, ACTION_PAUSE, pause_pendingIntent).build();
+
+			Intent playIntent = new Intent(this, Player.class);
+			Bundle bundle_play = new Bundle();
+			playIntent.setAction("PLAY");
+			playIntent.putExtras(bundle_play);
+			PendingIntent play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action play_action = new NotificationCompat.Action.Builder(R.drawable.baseline_play_arrow_24, ACTION_PLAY, play_pendingIntent).build();
+
+
+			Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
+					.setSmallIcon(R.drawable.play_circle)
+					.setContentTitle(exoPlayer.getMediaMetadata().title)
+					.setContentText(exoPlayer.getMediaMetadata().artist)
+					.setLargeIcon(bitmap)
+					.setChannelId(CHANNEL_ID)
+					.setStyle(mediaStyle)
+					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
+					.build();
+			Log.d("isPlaying: ", Boolean.toString(exoPlayer.isPlaying()));
+			player_notification_manager = NotificationManagerCompat.from(getApplicationContext());
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+				/* Notification Manager. Creating notification channel */
+				if(!player_notification_manager.areNotificationsEnabled()) {
+					player_notification_manager.createNotificationChannel(notificationChannelCompat);
+				}
+			}
+			/* Setting or updating notification */
+			if(player_notification == null) {
+				startForeground(NOTIFICATION_ID, notification);
+				player_notification = notification;
+			} else {
+				player_notification = notification;
+				player_notification_manager.notify(NOTIFICATION_ID, player_notification);
+			}
+		} catch (Exception ex) {
+			if(ex.getMessage() != null) {
+				ex.printStackTrace();
+				Log.e("Notification error: ", ex.getMessage());
+			} else {
+				ex.printStackTrace();
+				Log.e("Notification error: ", "Empty message");
+			}
+		}
 	}
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
 
+		/* Player */
 		if(exoPlayer == null) {
 			DefaultRenderersFactory renderersFactory = new DefaultRenderersFactory(this) {
 				@Nullable
@@ -76,6 +205,14 @@ public class Player extends Service {
 			};
 			exoPlayer = new ExoPlayer.Builder(getApplicationContext(), renderersFactory).build();
 			exoPlayer.setVolume(1);
+			exoPlayer.addListener(new com.google.android.exoplayer2.Player.Listener() {
+				@Override
+				public void onIsPlayingChanged(boolean isPlaying) {
+					com.google.android.exoplayer2.Player.Listener.super.onIsPlayingChanged(isPlaying);
+					/* Notification */
+					create_notification();
+				}
+			});
 		}
 	}
 
@@ -178,17 +315,18 @@ public class Player extends Service {
                 }
 	            case "PLAY": {
 					if(exoPlayer != null) {
+						exoPlayer.setVolume(0);
 						exoPlayer.play();
 						volume_runner = new Runnable() {
 							float time = 0;
 							@Override
 							public void run() {
-								time += 0.1;
+								time += 0.025;
 								if(time > 1) {
 									volume_handler.removeCallbacks(volume_runner);
 								} else {
 									exoPlayer.setVolume(time);
-									volume_handler.postDelayed(volume_runner, 500);
+									volume_handler.postDelayed(volume_runner, 10);
 								}
 							}
 						};
@@ -199,20 +337,20 @@ public class Player extends Service {
 	            case "PAUSE": {
 		            if(exoPlayer != null) {
 			            volume_runner = new Runnable() {
-				            float time = 0;
+				            float time = exoPlayer.getVolume();
 				            @Override
 				            public void run() {
-					            time -= 0.1;
+					            time -= 0.025;
 					            if(time < 0) {
 						            volume_handler.removeCallbacks(volume_runner);
+						            exoPlayer.pause();
 					            } else {
 						            exoPlayer.setVolume(time);
-						            volume_handler.postDelayed(volume_runner, 100);
+						            volume_handler.postDelayed(volume_runner, 10);
 					            }
 				            }
 			            };
 			            volume_handler.postDelayed(volume_runner, 0);
-			            exoPlayer.pause();
 		            }
 					break;
 	            }
@@ -228,6 +366,7 @@ public class Player extends Service {
                 }
             }
         } catch (Exception ex) {
+			ex.printStackTrace();
             if (ex.getMessage() != null) {
                 Log.d("onStartCommand ERROR: ", ex.getMessage());
             }
@@ -241,6 +380,15 @@ public class Player extends Service {
 			exoPlayer.stop();
 			exoPlayer.release();
 			exoPlayer = null;
+		}
+		if(player_notification_manager != null) {
+			player_notification_manager.cancelAll();
+			player_notification_manager = null;
+			player_notification = null;
+		}
+		if(mediaSessionCompat != null) {
+			mediaSessionCompat.release();
+			mediaSessionCompat = null;
 		}
 		super.onDestroy();
 	}
