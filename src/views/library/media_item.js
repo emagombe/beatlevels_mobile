@@ -60,7 +60,7 @@ const MediaItem = (props) => {
 		try {
 			const media_info = {
 				id: String(item._id),
-				local: false,
+				local: true,
 				title: String(item.title),
 				artist: String(item.artist),
 				uri: String(item._data),

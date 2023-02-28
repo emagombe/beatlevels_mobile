@@ -309,7 +309,7 @@ public class Player extends Service {
 
                     DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(getApplicationContext());
                     MediaItem mediaItem = null;
-
+					
 					if(media_local) {
 						/* If local file */
 						File media_file = new File(media_uri);
@@ -322,15 +322,11 @@ public class Player extends Service {
 							bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
 							img = stream.toByteArray();
 						}
-						Bundle bundle = new Bundle();
-						bundle.putLong("duration", media_duration);
-						bundle.putByteArray("img", img);
 
 						MediaMetadata.Builder builder = new MediaMetadata.Builder();
 						builder.setTitle(media_title);
 						builder.setArtist(media_artist);
 						builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
-						builder.setExtras(bundle);
 
 						MediaMetadata mediaMetadata = builder.build();
 
