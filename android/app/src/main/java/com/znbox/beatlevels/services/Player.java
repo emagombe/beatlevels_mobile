@@ -80,7 +80,6 @@ public class Player extends Service {
 
 	}
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
 	@SuppressLint("ServiceCast")
 	private void create_notification() {
 		try {
@@ -145,35 +144,60 @@ public class Player extends Service {
 			Bundle bundle_pause = new Bundle();
 			pauseIntent.setAction("PAUSE");
 			pauseIntent.putExtras(bundle_pause);
-			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent pause_pendingIntent = null;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_MUTABLE);
+			} else {
+				pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+			}
 			NotificationCompat.Action pause_action = new NotificationCompat.Action.Builder(R.drawable.round_pause_24, ACTION_PAUSE, pause_pendingIntent).build();
 
 			Intent playIntent = new Intent(this, Player.class);
 			Bundle bundle_play = new Bundle();
 			playIntent.setAction("PLAY");
 			playIntent.putExtras(bundle_play);
-			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent play_pendingIntent = null;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_MUTABLE);
+			} else {
+				play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			}
 			NotificationCompat.Action play_action = new NotificationCompat.Action.Builder(R.drawable.round_play_arrow_24, ACTION_PLAY, play_pendingIntent).build();
 
 			Intent stopIntent = new Intent(this, Player.class);
 			Bundle bundle_stop = new Bundle();
 			stopIntent.setAction("STOP");
 			stopIntent.putExtras(bundle_stop);
-			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent stop_pendingIntent = null;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_MUTABLE);
+			} else {
+				stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			}
 			NotificationCompat.Action stop_action = new NotificationCompat.Action.Builder(R.drawable.round_close_24, ACTION_STOP, stop_pendingIntent).build();
 
 			Intent nextIntent = new Intent(this, Player.class);
 			stopIntent.setAction("NEXT");
 			Bundle bundle_next = new Bundle();
 			nextIntent.putExtras(bundle_next);
-			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent next_pendingIntent = PendingIntent.getService(this, 3, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent next_pendingIntent = null;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				next_pendingIntent = PendingIntent.getService(this, 3, nextIntent, PendingIntent.FLAG_MUTABLE);
+			} else {
+				next_pendingIntent = PendingIntent.getService(this, 3, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			}
 			NotificationCompat.Action next_action = new NotificationCompat.Action.Builder(R.drawable.round_skip_next_24, ACTION_NEXT, next_pendingIntent).build();
 
 			Intent previousIntent = new Intent(this, Player.class);
 			stopIntent.setAction("PREVIOUS");
 			Bundle bundle_previous = new Bundle();
 			previousIntent.putExtras(bundle_previous);
-			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent previous_pendingIntent = PendingIntent.getService(this, 4, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			PendingIntent previous_pendingIntent = null;
+			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+				previous_pendingIntent = PendingIntent.getService(this, 4, previousIntent, PendingIntent.FLAG_MUTABLE);
+			} else {
+				previous_pendingIntent = PendingIntent.getService(this, 4, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			}
 			NotificationCompat.Action previous_action = new NotificationCompat.Action.Builder(R.drawable.round_skip_previous_24, ACTION_PREVIOUS, previous_pendingIntent).build();
 
 			Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
@@ -181,7 +205,6 @@ public class Player extends Service {
 					.setContentTitle(exoPlayer.getMediaMetadata().title)
 					.setContentText(exoPlayer.getMediaMetadata().artist)
 					.setLargeIcon(bitmap)
-					.setChannelId(CHANNEL_ID)
 					.addAction(previous_action)
 					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
 					.addAction(next_action)
@@ -189,12 +212,11 @@ public class Player extends Service {
 					.setStyle(mediaStyle)
 					.setColorized(true)
 					.setUsesChronometer(true)
-					.setChronometerCountDown(true)
 					.build();
 			player_notification_manager = NotificationManagerCompat.from(getApplicationContext());
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
 				/* Notification Manager. Creating notification channel */
-				if(!player_notification_manager.areNotificationsEnabled()) {
+				if(player_notification_manager.getNotificationChannelsCompat().size() == 0) {
 					player_notification_manager.createNotificationChannel(notificationChannelCompat);
 				}
 			}
@@ -362,11 +384,6 @@ public class Player extends Service {
 						builder.setTitle(media_title);
 						builder.setArtist(media_artist);
 						builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
-
-						Bundle bundle = new Bundle();
-						bundle.putLong("duration", media_duration);
-						bundle.putByteArray("img", img);
-						builder.setExtras(bundle);
 
 						MediaMetadata mediaMetadata = builder.build();
 						mediaItem = new MediaItem.Builder()
