@@ -137,7 +137,7 @@ public class Player extends Service {
 			});
 			mediaSessionCompat.setActive(true);
 			androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle()
-					.setShowActionsInCompactView(1, 0)
+					.setShowActionsInCompactView(1, 2, 3)
 					.setMediaSession(MediaSessionCompat.Token.fromToken(mediaSessionCompat.getSessionToken().getToken()));
 
 			/* Setting playback actions */
@@ -145,22 +145,36 @@ public class Player extends Service {
 			Bundle bundle_pause = new Bundle();
 			pauseIntent.setAction("PAUSE");
 			pauseIntent.putExtras(bundle_pause);
-			PendingIntent pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			NotificationCompat.Action pause_action = new NotificationCompat.Action.Builder(R.drawable.baseline_pause_24, ACTION_PAUSE, pause_pendingIntent).build();
+			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent pause_pendingIntent = PendingIntent.getService(this, 1, pauseIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action pause_action = new NotificationCompat.Action.Builder(R.drawable.round_pause_24, ACTION_PAUSE, pause_pendingIntent).build();
 
 			Intent playIntent = new Intent(this, Player.class);
 			Bundle bundle_play = new Bundle();
 			playIntent.setAction("PLAY");
 			playIntent.putExtras(bundle_play);
-			PendingIntent play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			NotificationCompat.Action play_action = new NotificationCompat.Action.Builder(R.drawable.baseline_play_arrow_24, ACTION_PLAY, play_pendingIntent).build();
+			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent play_pendingIntent = PendingIntent.getService(this, 2, playIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action play_action = new NotificationCompat.Action.Builder(R.drawable.round_play_arrow_24, ACTION_PLAY, play_pendingIntent).build();
 
 			Intent stopIntent = new Intent(this, Player.class);
 			Bundle bundle_stop = new Bundle();
 			stopIntent.setAction("STOP");
 			stopIntent.putExtras(bundle_stop);
-			PendingIntent stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-			NotificationCompat.Action stop_action = new NotificationCompat.Action.Builder(R.drawable.baseline_stop_24, ACTION_STOP, stop_pendingIntent).build();
+			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent stop_pendingIntent = PendingIntent.getService(this, 0, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action stop_action = new NotificationCompat.Action.Builder(R.drawable.round_close_24, ACTION_STOP, stop_pendingIntent).build();
+
+			Intent nextIntent = new Intent(this, Player.class);
+			stopIntent.setAction("NEXT");
+			Bundle bundle_next = new Bundle();
+			nextIntent.putExtras(bundle_next);
+			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent next_pendingIntent = PendingIntent.getService(this, 3, nextIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action next_action = new NotificationCompat.Action.Builder(R.drawable.round_skip_next_24, ACTION_NEXT, next_pendingIntent).build();
+
+			Intent previousIntent = new Intent(this, Player.class);
+			stopIntent.setAction("PREVIOUS");
+			Bundle bundle_previous = new Bundle();
+			previousIntent.putExtras(bundle_previous);
+			@SuppressLint("UnspecifiedImmutableFlag") PendingIntent previous_pendingIntent = PendingIntent.getService(this, 4, previousIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+			NotificationCompat.Action previous_action = new NotificationCompat.Action.Builder(R.drawable.round_skip_previous_24, ACTION_PREVIOUS, previous_pendingIntent).build();
 
 			Notification notification = new NotificationCompat.Builder(this, CHANNEL_ID)
 					.setSmallIcon(R.drawable.play_circle)
@@ -168,7 +182,9 @@ public class Player extends Service {
 					.setContentText(exoPlayer.getMediaMetadata().artist)
 					.setLargeIcon(bitmap)
 					.setChannelId(CHANNEL_ID)
+					.addAction(previous_action)
 					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
+					.addAction(next_action)
 					.addAction(stop_action)
 					.setStyle(mediaStyle)
 					.setColorized(true)
@@ -309,7 +325,7 @@ public class Player extends Service {
 
                     DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(getApplicationContext());
                     MediaItem mediaItem = null;
-					
+
 					if(media_local) {
 						/* If local file */
 						File media_file = new File(media_uri);
