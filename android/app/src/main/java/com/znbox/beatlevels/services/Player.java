@@ -18,9 +18,11 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaSessionCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.app.NotificationChannelCompat;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
@@ -78,6 +80,7 @@ public class Player extends Service {
 
 	}
 
+	@RequiresApi(api = Build.VERSION_CODES.N)
 	@SuppressLint("ServiceCast")
 	private void create_notification() {
 		try {
@@ -90,6 +93,12 @@ public class Player extends Service {
 
 			if(mediaSessionCompat == null) {
 				mediaSessionCompat = new MediaSessionCompat(this, "Player");
+				/* Setting playback state here because exoplayer onIsPlayingChanged doesn't fire on set music */
+				mediaSessionCompat.setPlaybackState(new PlaybackStateCompat.Builder()
+						.setState(PlaybackStateCompat.STATE_PLAYING, 0, 1)
+						.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+						.build()
+				);
 			}
 			android.media.MediaMetadata mediaMetadata = new android.media.MediaMetadata.Builder()
 					.putBitmap(android.media.MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
@@ -120,9 +129,15 @@ public class Player extends Service {
 					}
 				}
 
+				@Override
+				public void onSeekTo(long pos) {
+					super.onSeekTo(pos);
+					exoPlayer.seekTo(pos);
+				}
 			});
 			mediaSessionCompat.setActive(true);
 			androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle()
+					.setShowActionsInCompactView(1, 0)
 					.setMediaSession(MediaSessionCompat.Token.fromToken(mediaSessionCompat.getSessionToken().getToken()));
 
 			/* Setting playback actions */
@@ -153,10 +168,12 @@ public class Player extends Service {
 					.setContentText(exoPlayer.getMediaMetadata().artist)
 					.setLargeIcon(bitmap)
 					.setChannelId(CHANNEL_ID)
-					.setStyle(mediaStyle)
 					.addAction(exoPlayer.isPlaying() ? pause_action : play_action)
 					.addAction(stop_action)
-					.setStyle(mediaStyle.setShowActionsInCompactView(1, 0))
+					.setStyle(mediaStyle)
+					.setColorized(true)
+					.setUsesChronometer(true)
+					.setChronometerCountDown(true)
 					.build();
 			player_notification_manager = NotificationManagerCompat.from(getApplicationContext());
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -217,8 +234,39 @@ public class Player extends Service {
 				@Override
 				public void onIsPlayingChanged(boolean isPlaying) {
 					com.google.android.exoplayer2.Player.Listener.super.onIsPlayingChanged(isPlaying);
+					if(mediaSessionCompat != null) {
+						mediaSessionCompat.setPlaybackState(
+								new PlaybackStateCompat.Builder()
+										.setState(
+												isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+												exoPlayer.getCurrentPosition(),
+												1
+										)
+										.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+										.build()
+						);
+					}
 					/* Notification */
-					create_notification();
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+						create_notification();
+					}
+				}
+
+				@Override
+				public void onPositionDiscontinuity(com.google.android.exoplayer2.Player.PositionInfo oldPosition, com.google.android.exoplayer2.Player.PositionInfo newPosition, int reason) {
+					com.google.android.exoplayer2.Player.Listener.super.onPositionDiscontinuity(oldPosition, newPosition, reason);
+					if(mediaSessionCompat != null) {
+						mediaSessionCompat.setPlaybackState(
+								new PlaybackStateCompat.Builder()
+										.setState(
+												exoPlayer.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+												exoPlayer.getCurrentPosition(),
+												1
+										)
+										.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+										.build()
+						);
+					}
 				}
 			});
 		}
