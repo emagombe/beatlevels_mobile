@@ -56,19 +56,25 @@ const MediaItem = (props) => {
 		run_async();
 	}, []);
 
-	const on_press_play_tracks = async (item) => {
+	const on_press_play_tracks = async (item, index) => {
 		try {
-			const media_info = {
-				id: String(item._id),
-				local: true,
-				title: String(item.title),
-				artist: String(item.artist),
-				uri: String(item._data),
-				artwork_uri: String(""),
-				duration: parseInt(item.duration),
-				queue: list.map((item, index) => index),
-			};
-			await NativeModules.Player.set_media(JSON.stringify(media_info));
+			const media_list = list.map((item) => {
+				return {
+					id: String(item._id),
+					local: true,
+					title: String(item.title),
+					artist: String(item.artist),
+					uri: String(item._data),
+					artwork_uri: String(""),
+					duration: parseInt(item.duration),
+				};
+			});
+			const data = {
+				queue: media_list,
+				current_id: item._id,
+				index: index,
+			}
+			await NativeModules.Player.set_media(JSON.stringify(data));
 			await NativeModules.Player.play();
 		} catch (ex) {
 			console.log(ex);
@@ -78,7 +84,7 @@ const MediaItem = (props) => {
 	return (
 		<Fragment>
 			<BLButton
-				onPress={e => on_press_play_tracks(item)}
+				onPress={e => on_press_play_tracks(item, index)}
 				style={{
 					borderRadius: 10,
 					marginLeft: 5,

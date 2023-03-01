@@ -49,6 +49,7 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 public class Player extends Service {
 
@@ -136,7 +137,7 @@ public class Player extends Service {
 			});
 			mediaSessionCompat.setActive(true);
 			androidx.media.app.NotificationCompat.MediaStyle mediaStyle = new androidx.media.app.NotificationCompat.MediaStyle()
-					.setShowActionsInCompactView(1, 2, 3)
+					.setShowActionsInCompactView(0, 1, 2)
 					.setMediaSession(MediaSessionCompat.Token.fromToken(mediaSessionCompat.getSessionToken().getToken()));
 
 			/* Setting playback actions */
@@ -177,7 +178,7 @@ public class Player extends Service {
 			NotificationCompat.Action stop_action = new NotificationCompat.Action.Builder(R.drawable.round_close_24, ACTION_STOP, stop_pendingIntent).build();
 
 			Intent nextIntent = new Intent(this, Player.class);
-			stopIntent.setAction("NEXT");
+			nextIntent.setAction("NEXT");
 			Bundle bundle_next = new Bundle();
 			nextIntent.putExtras(bundle_next);
 			PendingIntent next_pendingIntent = null;
@@ -189,7 +190,7 @@ public class Player extends Service {
 			NotificationCompat.Action next_action = new NotificationCompat.Action.Builder(R.drawable.round_skip_next_24, ACTION_NEXT, next_pendingIntent).build();
 
 			Intent previousIntent = new Intent(this, Player.class);
-			stopIntent.setAction("PREVIOUS");
+			previousIntent.setAction("PREVIOUS");
 			Bundle bundle_previous = new Bundle();
 			previousIntent.putExtras(bundle_previous);
 			PendingIntent previous_pendingIntent = null;
@@ -306,6 +307,27 @@ public class Player extends Service {
 						);
 					}
 				}
+
+				@Override
+				public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
+					com.google.android.exoplayer2.Player.Listener.super.onMediaItemTransition(mediaItem, reason);
+					if(mediaSessionCompat != null) {
+						mediaSessionCompat.setPlaybackState(
+								new PlaybackStateCompat.Builder()
+										.setState(
+												exoPlayer.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+												exoPlayer.getCurrentPosition(),
+												1
+										)
+										.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+										.build()
+						);
+					}
+					/* Notification */
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+						create_notification();
+					}
+				}
 			});
 		}
 	}
@@ -330,71 +352,73 @@ public class Player extends Service {
                 case "SET_MEDIA": {
 	                final String media_info_string = intent.getStringExtra("json");
 	                final JSONObject media_info = new JSONObject(media_info_string);
-
-	                final String media_id = media_info.getString("id");
-	                final boolean media_local = media_info.getBoolean("local");
-	                final long media_duration = media_info.getLong("duration");
-	                final String media_uri = media_info.getString("uri");
-	                final String media_title = media_info.getString("title");
-	                final String media_artist = media_info.getString("artist");
-	                final String media_artwork_uri = media_info.getString("artwork_uri");
 					final JSONArray media_queue = media_info.getJSONArray("queue");
+	                final int current_index = media_info.getInt("index");
 
-	                player_queue = new int[media_queue.length()];
-	                for (int i = 0; i < media_queue.length(); i ++) {
-		                player_queue[i] = media_queue.getInt(i);
-	                }
+	                ArrayList <MediaSource> mediaSources = new ArrayList <MediaSource>();
+					for(int i = 0; i < media_queue.length(); i ++) {
+						final JSONObject media_item = media_queue.getJSONObject(i);
 
-                    DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(getApplicationContext());
-                    MediaItem mediaItem = null;
+						final String media_id = media_item.getString("id");
+						final boolean media_local = media_item.getBoolean("local");
+						final long media_duration = media_item.getLong("duration");
+						final String media_uri = media_item.getString("uri");
+						final String media_title = media_item.getString("title");
+						final String media_artist = media_item.getString("artist");
+						final String media_artwork_uri = media_item.getString("artwork_uri");
 
-					if(media_local) {
-						/* If local file */
-						File media_file = new File(media_uri);
-						MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
-						metadataRetriever.setDataSource(media_file.getAbsolutePath());
-						byte[] img = metadataRetriever.getEmbeddedPicture();
-						if (img == null) {
+						DataSource.Factory dataSourceFactory = new DefaultDataSource.Factory(getApplicationContext());
+						MediaItem mediaItem = null;
+
+						if(media_local) {
+							/* If local file */
+							File media_file = new File(media_uri);
+							MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
+							metadataRetriever.setDataSource(media_file.getAbsolutePath());
+							byte[] img = metadataRetriever.getEmbeddedPicture();
+							if (img == null) {
+								@SuppressLint("UseCompatLoadingForDrawables") Bitmap bitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.default_note)).getBitmap();
+								ByteArrayOutputStream stream = new ByteArrayOutputStream();
+								bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+								img = stream.toByteArray();
+							}
+
+							MediaMetadata.Builder builder = new MediaMetadata.Builder();
+							builder.setTitle(media_title);
+							builder.setArtist(media_artist);
+							builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
+
+							MediaMetadata mediaMetadata = builder.build();
+
+							mediaItem = new MediaItem.Builder()
+									.setMediaMetadata(mediaMetadata)
+									.setUri(media_file.getAbsolutePath())
+									.setMediaId(media_id)
+									.build();
+						} else {
+							/* Remote files */
 							@SuppressLint("UseCompatLoadingForDrawables") Bitmap bitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.default_note)).getBitmap();
 							ByteArrayOutputStream stream = new ByteArrayOutputStream();
 							bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-							img = stream.toByteArray();
+							byte[] img = stream.toByteArray();
+
+							MediaMetadata.Builder builder = new MediaMetadata.Builder();
+							builder.setTitle(media_title);
+							builder.setArtist(media_artist);
+							builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
+
+							MediaMetadata mediaMetadata = builder.build();
+							mediaItem = new MediaItem.Builder()
+									.setMediaMetadata(mediaMetadata)
+									.setUri(media_uri)
+									.setMediaId(media_id)
+									.build();
 						}
 
-						MediaMetadata.Builder builder = new MediaMetadata.Builder();
-						builder.setTitle(media_title);
-						builder.setArtist(media_artist);
-						builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
-
-						MediaMetadata mediaMetadata = builder.build();
-
-						mediaItem = new MediaItem.Builder()
-								.setMediaMetadata(mediaMetadata)
-								.setUri(media_file.getAbsolutePath())
-								.setMediaId(media_id)
-								.build();
-					} else {
-						/* Remote files */
-						@SuppressLint("UseCompatLoadingForDrawables") Bitmap bitmap = ((BitmapDrawable) getResources().getDrawable(R.drawable.default_note)).getBitmap();
-						ByteArrayOutputStream stream = new ByteArrayOutputStream();
-						bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
-						byte[] img = stream.toByteArray();
-
-						MediaMetadata.Builder builder = new MediaMetadata.Builder();
-						builder.setTitle(media_title);
-						builder.setArtist(media_artist);
-						builder.setArtworkData(img, MediaMetadata.PICTURE_TYPE_FILE_ICON_OTHER);
-
-						MediaMetadata mediaMetadata = builder.build();
-						mediaItem = new MediaItem.Builder()
-								.setMediaMetadata(mediaMetadata)
-								.setUri(media_uri)
-								.setMediaId(media_id)
-								.build();
+						MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem);
+						mediaSources.add(mediaSource);
 					}
-                    MediaSource mediaSource = new ProgressiveMediaSource.Factory(dataSourceFactory).createMediaSource(mediaItem);
-	                CURRENT_INDEX = 0;
-                    exoPlayer.setMediaSource(mediaSource);
+                    exoPlayer.setMediaSources(mediaSources, current_index, 0);
 					exoPlayer.prepare();
                     break;
                 }
@@ -444,6 +468,18 @@ public class Player extends Service {
 			            stopSelf();
 		            }
 					break;
+	            }
+	            case "NEXT": {
+		            if(exoPlayer != null) {
+			            exoPlayer.seekToNextMediaItem();
+		            }
+		            break;
+	            }
+	            case "PREVIOUS": {
+		            if(exoPlayer != null) {
+			            exoPlayer.seekToPreviousMediaItem();
+		            }
+		            break;
 	            }
                 default: {
 
