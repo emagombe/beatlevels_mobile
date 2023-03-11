@@ -57,7 +57,9 @@ public class Player extends Service {
 	private static int CURRENT_INDEX = 0;
 	private static int[] player_queue = null;
 	private static Handler volume_handler = new Handler();
+	private static Handler media_transition_handler = new Handler();
 	private static Runnable volume_runner = null;
+	private static Runnable media_transition_runner = null;
 
 
 	/* Notification */
@@ -273,22 +275,30 @@ public class Player extends Service {
 				@Override
 				public void onIsPlayingChanged(boolean isPlaying) {
 					com.google.android.exoplayer2.Player.Listener.super.onIsPlayingChanged(isPlaying);
-					if(mediaSessionCompat != null) {
-						mediaSessionCompat.setPlaybackState(
-								new PlaybackStateCompat.Builder()
-										.setState(
-												isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
-												exoPlayer.getCurrentPosition(),
-												1
-										)
-										.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-										.build()
-						);
-					}
-					/* Notification */
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-						create_notification();
-					}
+					media_transition_handler.removeCallbacks(media_transition_runner);
+					media_transition_runner = new Runnable() {
+						@Override
+						public void run() {
+							if(mediaSessionCompat != null) {
+								mediaSessionCompat.setPlaybackState(
+										new PlaybackStateCompat.Builder()
+												.setState(
+														isPlaying ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+														exoPlayer.getCurrentPosition(),
+														1
+												)
+												.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+												.build()
+								);
+							}
+							/* Notification */
+							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+								create_notification();
+							}
+							media_transition_handler.removeCallbacks(media_transition_runner);
+						}
+					};
+					media_transition_handler.postDelayed(media_transition_runner, 500);
 				}
 
 				@Override
@@ -311,22 +321,31 @@ public class Player extends Service {
 				@Override
 				public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
 					com.google.android.exoplayer2.Player.Listener.super.onMediaItemTransition(mediaItem, reason);
-					if(mediaSessionCompat != null) {
-						mediaSessionCompat.setPlaybackState(
-								new PlaybackStateCompat.Builder()
-										.setState(
-												exoPlayer.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
-												exoPlayer.getCurrentPosition(),
-												1
-										)
-										.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
-										.build()
-						);
-					}
-					/* Notification */
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-						create_notification();
-					}
+					media_transition_handler.removeCallbacks(media_transition_runner);
+					media_transition_runner = new Runnable() {
+						@Override
+						public void run() {
+							if(mediaSessionCompat != null) {
+								mediaSessionCompat.setPlaybackState(
+										new PlaybackStateCompat.Builder()
+												.setState(
+														exoPlayer.isPlaying() ? PlaybackStateCompat.STATE_PLAYING : PlaybackStateCompat.STATE_PAUSED,
+														exoPlayer.getCurrentPosition(),
+														1
+												)
+												.setActions(PlaybackStateCompat.ACTION_SEEK_TO)
+												.build()
+								);
+								/* Notification */
+								if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+									create_notification();
+								}
+							}
+							media_transition_handler.removeCallbacks(media_transition_runner);
+						}
+					};
+					media_transition_handler.postDelayed(media_transition_runner, 500);
+					/* Send to UI */
 				}
 			});
 		}
@@ -335,7 +354,8 @@ public class Player extends Service {
 	@Override
 	public IBinder onBind(Intent intent) {
 		// TODO: Return the communication channel to the service.
-		throw new UnsupportedOperationException("Not yet implemented");
+		// throw new UnsupportedOperationException("Not yet implemented");
+		return null;
 	}
 
 	@Override
