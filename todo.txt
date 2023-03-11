@@ -6,4 +6,4 @@ Build route system
 List media folders (CURRENT)
 List media
 Add player service
-Add player notification
+Add player notification (DONE)
