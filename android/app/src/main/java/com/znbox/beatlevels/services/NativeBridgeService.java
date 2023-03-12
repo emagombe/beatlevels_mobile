@@ -18,27 +18,21 @@ public class NativeBridgeService extends HeadlessJsTaskService {
     @Override
     protected @Nullable HeadlessJsTaskConfig getTaskConfig(Intent intent) {
         try {
-            Thread thread = new Thread() {
-                @Override
-                public void run() {
-                    Bundle extras = intent.getExtras();
+            Bundle extras = intent.getExtras();
 
-                    HeadlessJsTaskRetryPolicy retryPolicy = new LinearCountingRetryPolicy(
-                            3, // Max number of retry attempts
-                            1000 // Delay between each retry attempt
-                    );
+            HeadlessJsTaskRetryPolicy retryPolicy = new LinearCountingRetryPolicy(
+                    3, // Max number of retry attempts
+                    1000 // Delay between each retry attempt
+            );
 
-                    WritableMap data = extras != null ? Arguments.fromBundle(extras) : null;
-                    NativeBridgeService.ht = new HeadlessJsTaskConfig(
-                            "NativeBridgeService",
-                            data,
-                            5000, // timeout for the task
-                            true, // optional: defines whether or not  the task is allowed in foreground. Default is false
-                            retryPolicy
-                    );
-                }
-            };
-            thread.start();
+            WritableMap data = extras != null ? Arguments.fromBundle(extras) : null;
+            NativeBridgeService.ht = new HeadlessJsTaskConfig(
+                    "NativeBridgeService",
+                    data,
+                    5000, // timeout for the task
+                    true, // optional: defines whether or not  the task is allowed in foreground. Default is false
+                    retryPolicy
+            );
             return NativeBridgeService.ht;
         } catch (Exception e) {
             return null;

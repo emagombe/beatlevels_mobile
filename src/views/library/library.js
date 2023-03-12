@@ -24,12 +24,16 @@ import { useHistory, } from "react-router-native";
 /* Icons */
 import ADIcon from 'react-native-vector-icons/AntDesign';
 import MCIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import MIcon from 'react-native-vector-icons/MaterialIcons';
 import FAIcon from 'react-native-vector-icons/FontAwesome';
 import SLIcon from 'react-native-vector-icons/SimpleLineIcons';
 
 /* Components */
 import BLButton from "../components/bl_button";
 import BLIconButton from "../components/bl_icon_button";
+
+/* Classes */
+import { get_folders } from "../../classes/Media";
 
 import Folders from "./folders";
 
@@ -38,6 +42,9 @@ import theme from "../../theme/theme";
 const Library = (props) => {
 
 	const [media_loading, set_media_loading] = useState(false);
+	const [folders_count, set_folders_count] = useState(0);
+	const [playlist_count, set_playlist_count] = useState(0);
+	const [albums_count, set_albums_count] = useState(0);
 
 	const windowWidth = Dimensions.get("window").width;
 	const windowHeight = Dimensions.get("window").height;
@@ -45,7 +52,7 @@ const Library = (props) => {
 	const isDarkMode = useColorScheme() === 'dark';
 	const history = useHistory();
 
-	const top_icon_button_size = 20;
+	const top_icon_button_size = 25;
 
 	useEffect(() => {
 
@@ -56,7 +63,9 @@ const Library = (props) => {
 			set_media_loading(true);
 			if(NativeModules.MediaScanner != null) {
 				const refresh_media_files = await NativeModules.MediaScanner.refresh_media_files("/");
-				const media = await NativeModules.MediaScanner.find_media();
+				const media_files = await NativeModules.MediaScanner.find_media();
+				const folders = get_folders(media_files.media_files);
+				set_folders_count(folders.length);
 			}
 			setTimeout(() => {
 				set_media_loading(false);
@@ -112,11 +121,6 @@ const Library = (props) => {
 				>
 					<BLIconButton
 						size={top_icon_button_size}
-					>
-						<ADIcon name="search1" size={top_icon_button_size} color={theme.font.main} />
-					</BLIconButton>
-					<BLIconButton
-						size={top_icon_button_size}
 						onPress={on_press_refresh}
 						disabled={media_loading}
 					>
@@ -126,15 +130,17 @@ const Library = (props) => {
 							<MCIcon name="refresh" size={top_icon_button_size} color={theme.font.main} />
 						)}
 					</BLIconButton>
+					<BLIconButton
+						size={top_icon_button_size}
+					>
+						<MIcon name="settings" size={top_icon_button_size} color={theme.font.main} />
+					</BLIconButton>
 				</View>
 			</View>
 			<View
 				style={{
-					marginTop: windowHeight / 5,
 					backgroundColor: "black",
 					height: "100%",
-					borderTopLeftRadius: 20,
-					borderTopRightRadius: 20,
 				}}
 			>
 				<View
@@ -158,18 +164,35 @@ const Library = (props) => {
 								width: '100%',
 							}}
 						>
-							<Text style={styles.library_container_item_text}>
-								All folders
-							</Text>
-							<MCIcon
-								name="folder"
-								size={30}
-								color={theme.primary}
+							<View
 								style={{
-									marginRight: 10,
-									opacity: 0.6,
+									flexDirection: "row",
+									alignItems: "center",
+									justifyContent: "flex-start",
 								}}
-							/>
+							>
+								<MCIcon
+									name="folder"
+									size={45}
+									color={theme.primary}
+									style={{
+										marginRight: 10,
+										opacity: 0.6,
+									}}
+								/>
+								<Text style={styles.library_container_item_text}>
+									All folders
+								</Text>
+							</View>
+							<Text
+								style={{
+									color: theme.font.main,
+									fontSize: 18,
+									fontWeight: "bold",
+								}}
+							>
+								{folders_count}
+							</Text>
 						</View>
 					</BLButton>
 					<BLButton
@@ -184,18 +207,78 @@ const Library = (props) => {
 								width: '100%',
 							}}
 						>
-							<Text style={styles.library_container_item_text}>
-								Playlists
-							</Text>
-							<MCIcon
-								name="playlist-music-outline"
-								size={30}
-								color={theme.primary}
+							<View
 								style={{
-									marginRight: 10,
-									opacity: 0.6,
+									flexDirection: "row",
+									alignItems: "center",
+									justifyContent: "flex-start",
 								}}
-							/>
+							>
+								<MCIcon
+									name="playlist-music-outline"
+									size={45}
+									color={theme.primary}
+									style={{
+										marginRight: 10,
+										opacity: 0.6,
+									}}
+								/>
+								<Text style={styles.library_container_item_text}>
+									Playlists
+								</Text>
+							</View>
+							<Text
+								style={{
+									color: theme.font.main,
+									fontSize: 18,
+									fontWeight: "bold",
+								}}
+							>
+								{playlist_count}
+							</Text>
+						</View>
+					</BLButton>
+					<BLButton
+						style={{ ...styles.library_container_item }}
+						color={"transparent"}
+					>
+						<View
+							style={{
+								flexDirection: "row",
+								alignItems: "center",
+								justifyContent: "space-between",
+								width: '100%',
+							}}
+						>
+							<View
+								style={{
+									flexDirection: "row",
+									alignItems: "center",
+									justifyContent: "flex-start",
+								}}
+							>
+								<MCIcon
+									name="album"
+									size={45}
+									color={theme.primary}
+									style={{
+										marginRight: 10,
+										opacity: 0.6,
+									}}
+								/>
+								<Text style={styles.library_container_item_text}>
+									Albums
+								</Text>
+							</View>
+							<Text
+								style={{
+									color: theme.font.main,
+									fontSize: 18,
+									fontWeight: "bold",
+								}}
+							>
+								{albums_count}
+							</Text>
 						</View>
 					</BLButton>
 				</View>
@@ -208,7 +291,7 @@ export default Library;
 const styles = StyleSheet.create({
 	library_title_container: {
 		margin: 10,
-		marginTop: 50,
+		marginTop: 70,
 	},
 	title: {
 		fontSize: 30,
@@ -225,7 +308,7 @@ const styles = StyleSheet.create({
 
 	},
 	library_container_item_text: {
-		fontSize: 14,
+		fontSize: 18,
 		fontWeight: 'bold',
 		color: theme.font.main,
 	},

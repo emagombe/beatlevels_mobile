@@ -18,7 +18,7 @@
 		"light": "#000",
 	},
 	"button": {
-		"main": "#1c1c1c",
+		"main": "#000",
 	},
 	"primary": "#fff",
 	"secodary": "lightgreen",

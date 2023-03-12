@@ -57,9 +57,11 @@ public class Player extends Service {
 	private static int CURRENT_INDEX = 0;
 	private static int[] player_queue = null;
 	private static Handler volume_handler = new Handler();
+	private static Handler player_position_handler = new Handler();
 	private static Handler media_transition_handler = new Handler();
 	private static Runnable volume_runner = null;
 	private static Runnable media_transition_runner = null;
+	private static Runnable player_position_runner = null;
 
 
 	/* Notification */
@@ -295,6 +297,15 @@ public class Player extends Service {
 							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
 								create_notification();
 							}
+							/* Updating the UI */
+							Bundle bundle = new Bundle();
+							bundle.putString("event", "ON_PLAYING_STATE_CHANGE");
+							bundle.putBoolean("is_playing", isPlaying);
+							Intent intent = new Intent(getApplicationContext(), NativeBridgeService.class);
+							intent.putExtras(bundle);
+							getApplicationContext().startService(intent);
+
+							player_position_handler.postDelayed(player_position_runner, 50);
 							media_transition_handler.removeCallbacks(media_transition_runner);
 						}
 					};
@@ -321,6 +332,17 @@ public class Player extends Service {
 				@Override
 				public void onMediaItemTransition(@Nullable MediaItem mediaItem, int reason) {
 					com.google.android.exoplayer2.Player.Listener.super.onMediaItemTransition(mediaItem, reason);
+					/* Updating the UI */
+					Bundle bundle = new Bundle();
+					bundle.putString("event", "ON_MEDIA_CHANGE");
+					bundle.putInt("reason", reason);
+					bundle.putDouble("position", exoPlayer.getCurrentPosition());
+					bundle.putDouble("duration", exoPlayer.getDuration());
+					bundle.putString("id", mediaItem == null ? null : mediaItem.mediaId);
+					Intent intent = new Intent(getApplicationContext(), NativeBridgeService.class);
+					intent.putExtras(bundle);
+					getApplicationContext().startService(intent);
+
 					media_transition_handler.removeCallbacks(media_transition_runner);
 					media_transition_runner = new Runnable() {
 						@Override
@@ -345,9 +367,31 @@ public class Player extends Service {
 						}
 					};
 					media_transition_handler.postDelayed(media_transition_runner, 500);
-					/* Send to UI */
 				}
 			});
+
+			/* Position Update */
+			player_position_handler.removeCallbacks(player_position_runner);
+			player_position_runner = new Runnable() {
+				@Override
+				public void run() {
+					if(exoPlayer != null) {
+						Bundle bundle = new Bundle();
+						bundle.putString("event", "CURRENT_POSITION");
+						bundle.putDouble("position", exoPlayer.getCurrentPosition());
+						bundle.putDouble("duration", exoPlayer.getDuration());
+						bundle.putString("id", exoPlayer.getCurrentMediaItem() == null ? null : exoPlayer.getCurrentMediaItem().mediaId);
+						Intent intent = new Intent(getApplicationContext(), NativeBridgeService.class);
+						intent.putExtras(bundle);
+						getApplicationContext().startService(intent);
+						player_position_handler.postDelayed(player_position_runner, 50);
+					} else {
+						/* Service has stopped */
+						player_position_handler.removeCallbacks(player_position_runner);
+					}
+				}
+			};
+			player_position_handler.postDelayed(player_position_runner, 0);
 		}
 	}
 
