@@ -55,7 +55,7 @@ const Library = (props) => {
 	const top_icon_button_size = 25;
 
 	useEffect(() => {
-
+		refresh_media_files();
 	}, []);
 
 	const refresh_media_files = async () => {
@@ -67,14 +67,10 @@ const Library = (props) => {
 				const folders = get_folders(media_files.media_files);
 				set_folders_count(folders.length);
 			}
-			setTimeout(() => {
-				set_media_loading(false);
-			}, 1000);
+			set_media_loading(false);
 		} catch (ex) {
 			console.log(ex);
-			setTimeout(() => {
-				set_media_loading(false);
-			}, 1000);
+			set_media_loading(false);
 		}
 	};
 
